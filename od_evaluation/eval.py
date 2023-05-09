@@ -89,7 +89,7 @@ class Evaluator(object):
 
         fppi        = -np.ones([T, R] + breakdown_dims)
         box_ious     = -np.ones([T,]   + breakdown_dims)
-        box_errors  = -np.ones([T,]   + breakdown_dims + [self.box_dim,])
+        box_errors  = -np.ones([T,]   + breakdown_dims + [self.box_dim+2,])
 
         eval_results_per_choice = self.split_eval_results_by_breakdowns(eval_result_list)
 
@@ -117,7 +117,15 @@ class Evaluator(object):
             this_ious  = np.concatenate([e['pd_matched_iou']  for e in E], axis=1)[:,sort_inds]
             pd_matched_gts  = np.concatenate([e['pd_matched_gt']  for e in E], axis=1)[:, sort_inds, :]
             pds = np.concatenate([e['pd_boxes']  for e in E], axis=0)[sort_inds, :]
+
             this_errors = np.abs(pds[None,...] - pd_matched_gts) # [num_thr, num_pds, box_dim]
+
+            angle_diff = this_errors[..., 6] % np.pi
+            this_errors[..., 6] = np.minimum(angle_diff, np.pi - angle_diff)
+            translation_error = np.linalg.norm(np.expand_dims(pds[...,:3], axis=0) - pd_matched_gts[...,:3], axis=-1)
+            
+            size_error = np.linalg.norm(np.expand_dims(pds[...,3:6], axis=0) - pd_matched_gts[...,3:6], axis=-1)
+            this_errors = np.concatenate([this_errors, translation_error[...,None], size_error[...,None]], axis=-1)
 
             assert gt_ignore.dtype == np.bool and pd_ignore.dtype == np.bool
             num_non_ig_gt = (~gt_ignore).sum()
@@ -146,6 +154,7 @@ class Evaluator(object):
                 pr = tp / (fp + tp + np.spacing(1))
                 # q  = np.zeros((R,), dtype=np.float)
                 # ss = np.zeros((R,), dtype=np.float)
+                # print(tp, fp, nd, rc, pr)
 
                 indices = tuple([t,] + choice_list) # a[(1,2,3)] is equivalent to a[1,2,3]
                 if nd:
@@ -276,6 +285,17 @@ class Evaluator(object):
                 for i in choice_list:
                     s = s[:, i]
                 assert s.ndim == 1 # only left dimensions of iouThrs and recall
+            elif metric == 'precision':
+                s = accumulated_result['precision']
+                # IoU
+                if iouThr is None:
+                    return
+                t = p.iouThrs.index(iouThr)
+                s = s[t, ...]
+                num_bkd = len(choice_list)
+                for i in choice_list:
+                    s = s[:, i]
+                assert s.ndim == 1 # only left dimensions of iouThrs and recall
             else:
                 raise NotImplementedError
 
@@ -293,7 +313,7 @@ class Evaluator(object):
 
         for iou_thr in p.iouThrs:
             for i in range(self.num_all_choices):
-                _summarize(i, 'fppi', iou_thr)
+                _summarize(i, 'precision', iou_thr)
 
         return summary_dict
 
@@ -374,7 +394,7 @@ class Evaluator(object):
                     mean_s = None
                 else:
                     s = s.mean(0).reshape(-1).tolist()
-                    assert len(s) == self.box_dim
+                    assert len(s) == self.box_dim+2
                     mean_s = '['
                     for i in range(len(s)):
                         mean_s += '{:.4f}, '.format(s[i])
@@ -495,6 +515,7 @@ class Evaluator(object):
         
         # update valid gt, pd, iou
         valid_ious = self.func_iou(pd_attrs['box'], gt_attrs['box'])
+        # print(pd_attrs['box'], gt_attrs['box'], valid_ious)
         # set_trace()
 
         num_gts = len(gt_attrs['type'])
@@ -562,7 +583,8 @@ class Evaluator(object):
 
     
     def split_by_sep_breakdowns(self, pd_attrs, gt_attrs, bd_dict):
-
+        gt_attrs = gt_attrs.copy()
+        pd_attrs = pd_attrs.copy()
         num_gts = len(gt_attrs['type']) # assume there is a 'type' breakdown
         num_pds = len(pd_attrs['type']) # assume there is a 'type' breakdown
 
@@ -577,8 +599,8 @@ class Evaluator(object):
             elif bd_value is None:
                 continue # None means using all ranges
             else:
-                valid_gt_mask = valid_gt_mask & (gt_attrs[bd] == bd_value)
-                valid_pd_mask = valid_pd_mask & (pd_attrs[bd] == bd_value)
+                valid_gt_mask = valid_gt_mask & (gt_attrs[bd] == [bd_value])
+                valid_pd_mask = valid_pd_mask & (pd_attrs[bd] == [bd_value])
         
         for key in pd_attrs:
             value = pd_attrs[key]
@@ -589,7 +611,6 @@ class Evaluator(object):
             value = gt_attrs[key]
             if isinstance(value, np.ndarray):
                 gt_attrs[key] = value[valid_gt_mask]
-
         return pd_attrs, gt_attrs
 
     def get_gt_ignore(self, gt_attrs, bd_dict):
@@ -655,6 +676,9 @@ class Evaluator(object):
         # add breakdown, assign bbox/gt ID.
         pds_dict = self.read_prediction(self.pd_path)
         gts_dict = self.read_groundtruth(self.gt_path)
+        with open("results.pkl", "wb") as fw:
+            pkl.dump(pds_dict, fw)
+            pkl.dump(gts_dict, fw)
         pds_list, gts_list = self.align_samples(pds_dict, gts_dict)
         num_samples = len(pds_list)
         assert num_samples == len(gts_list)
@@ -686,10 +710,8 @@ class Evaluator(object):
             total_gt_num += num_gt
 
             for bkd_name, bkd_func in self.func_bkd.items():
-                if num_pd > 0:
-                    pd[bkd_name] = bkd_func(pd=pd, gt=gt, mode='pd', params=self.params)
-                if num_gt > 0:
-                    gt[bkd_name] = bkd_func(pd=pd, gt=gt, mode='gt', params=self.params)
+                pd[bkd_name] = bkd_func(pd=pd, gt=gt, mode='pd', params=self.params)
+                gt[bkd_name] = bkd_func(pd=pd, gt=gt, mode='gt', params=self.params)
 
         self.pds_list = pds_list
         self.gts_list = gts_list
@@ -739,7 +761,7 @@ class Evaluator(object):
         print(f'Evaluation result saved to {save_path}')
 
 
-@numba.jit(nopython=True)
+# @numba.jit(nopython=True)
 def matching(ious, iouThrs, pd_ids, gt_ids, gt_ignore, pd_ignore, gt_match, pd_match):
     num_pds = ious.shape[0]
     num_gts = ious.shape[1]

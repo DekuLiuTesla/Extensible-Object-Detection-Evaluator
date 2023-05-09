@@ -83,3 +83,4 @@ def get_waymo_object(file_path, debug=False, gt=False):
         )
         
     return new_dict
+

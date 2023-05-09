@@ -123,4 +123,35 @@ class WaymoCrowdParam(WaymoBaseParam):
         self.crowd_distance = dist
 
 
+class RadialBaseParam(BaseParam):
+
+    def __init__(self, pd_path, gt_path, interval=1, iou_type='bev', update_sep=None, update_insep=None):
+        assert iou_type in ['bev', '3d'], "Only supports iou of bev or 3d."
+        self.iou_type = iou_type
+
+        super().__init__(pd_path, gt_path, interval, update_sep, update_insep)
+        self.iouThrs = [0.7, 0.5]
+    
+    def add_breakdowns(self):
+
+        self.separable_breakdowns = {
+            'type':('Vehicle', 'Pedestrian', 'Cyclist'), 
+            'range':([5, 30], [30, 50], [50, 80], [5,100], None), # None means the union of all ranges
+            # 'range': (None,),
+        }
+        self.breakdown_func_dict = {'range': waymo_range_breakdown}
+
+        self.inseparable_breakdowns = {}
+    
+    def add_iou_function(self):
+        from od_evaluation.ious import get_waymo_iou_matrix, get_waymo_iou_matrix_bev
+        if self.iou_type == 'bev':
+            self.iou_calculate_func = get_waymo_iou_matrix_bev
+        else:
+            self.iou_calculate_func = get_waymo_iou_matrix
+
+    def add_input_function(self):
+        from od_evaluation.radial_utils import get_radial_pred_object, get_radial_gt_object, get_fft_radnet_pred_object, get_fft_radnet_gt_object
+        self.read_prediction_func = get_radial_pred_object
+        self.read_groundtruth_func = get_radial_gt_object
 

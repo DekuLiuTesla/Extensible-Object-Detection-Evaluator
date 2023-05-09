@@ -6,14 +6,13 @@ import numpy as np
 
 sns.set_theme(style="darkgrid")
 
-path = './evaluation_results/20220509-124114-test_fp.pkl'
+path = '/mnt/truenas/scratch/yang.liu3/Python/RadarFormer/PolarFormer/evaluation_results/20230428-165024-.pkl'
 with open(path, 'rb') as f:
     eval_data = pkl.load(f)
-
-fppi = eval_data['IoU@0.5/type_Pedestrian/range_OVERALL/length_[0, 4]']
+fppi = eval_data['IoU@0.5/type_Vehicle/range_[5, 100]']
 
 recall = np.arange(101) / 100
+print(fppi)
 
-
-sns.lineplot(recall, fppi)
+plt.plot(recall[fppi>0], fppi[fppi>0])
 plt.savefig('test.png')
