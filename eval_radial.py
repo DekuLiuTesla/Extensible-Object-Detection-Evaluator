@@ -14,7 +14,8 @@ if __name__ == '__main__':
     pd_path = args.pd_path
     gt_path = args.gt_path 
 
-    pd_path = '/mnt/truenas/scratch/yang.liu3/Python/RadarFormer/PolarFormer/results_3d_test.npy'
+    # pd_path = '/mnt/truenas/scratch/yang.liu3/Python/RadarFormer/PolarFormer/results_img_12e.npy'
+    pd_path = '/mnt/truenas/scratch/yang.liu3/Python/RadarFormer/PolarFormer/results_img_12e.npy'
     # pd_path = '/mnt/truenas/scratch/feng.wang/training/RadarFormer/PolarFormer/RADIal_main/FFTRadNet_rbbox/predictions.pkl'
     gt_path = '/mnt/truenas/scratch/feng.wang/training/RadarFormer/PolarFormer/data/radial/ready/RADIal/radar_anno.pkl'
 

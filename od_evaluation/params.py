@@ -144,9 +144,11 @@ class RadialBaseParam(BaseParam):
         self.inseparable_breakdowns = {}
     
     def add_iou_function(self):
-        from od_evaluation.ious import get_waymo_iou_matrix, get_waymo_iou_matrix_bev
+        from od_evaluation.ious import get_waymo_iou_matrix, get_waymo_iou_matrix_bev, get_let_iou_matrix_bev
         if self.iou_type == 'bev':
             self.iou_calculate_func = get_waymo_iou_matrix_bev
+        elif self.iou_type == 'let':
+            self.iou_calculate_func = get_let_iou_matrix_bev
         else:
             self.iou_calculate_func = get_waymo_iou_matrix
 
