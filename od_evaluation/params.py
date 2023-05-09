@@ -125,11 +125,12 @@ class WaymoCrowdParam(WaymoBaseParam):
 
 class RadialBaseParam(BaseParam):
 
-    def __init__(self, pd_path, gt_path, interval=1, iou_type='bev', update_sep=None, update_insep=None):
-        assert iou_type in ['bev', '3d'], "Only supports iou of bev or 3d."
+    def __init__(self, pd_path, gt_path, save_folder, interval=1, iou_type='bev', update_sep=None, update_insep=None):
+        assert iou_type in ['bev', '3d', 'let'], "Only supports iou of bev or 3d."
         self.iou_type = iou_type
 
         super().__init__(pd_path, gt_path, interval, update_sep, update_insep)
+        self.save_folder = save_folder
         self.iouThrs = [0.7, 0.5]
     
     def add_breakdowns(self):
