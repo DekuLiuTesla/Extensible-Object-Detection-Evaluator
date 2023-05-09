@@ -137,7 +137,7 @@ class RadialBaseParam(BaseParam):
 
         self.separable_breakdowns = {
             'type':('Vehicle', 'Pedestrian', 'Cyclist'), 
-            'range':([5, 30], [30, 50], [50, 80], [5,100], None), # None means the union of all ranges
+            'range':([0, 50], [50, 100], None), # None means the union of all ranges
             # 'range': (None,),
         }
         self.breakdown_func_dict = {'range': waymo_range_breakdown}
