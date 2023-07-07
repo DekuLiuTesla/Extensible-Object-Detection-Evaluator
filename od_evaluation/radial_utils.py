@@ -3,7 +3,7 @@ import numpy as np
 import pickle as pkl
 
 def get_fft_radnet_pred_object(file_path):
-    test_info = pkl.load(open('/mnt/truenas/scratch/yang.liu3/Python/RadarFormer/PolarFormer/data/radial_kitti_format/radialx_infos_test.pkl',"rb"))
+    test_info = pkl.load(open('/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFusion/data/radial_kitti_format/radialx_infos_test.pkl',"rb"))
     test_ids = []
     for i in range(len(test_info)):
         test_ids.append(test_info[i]['image']['image_idx'])
@@ -39,7 +39,7 @@ def get_fft_radnet_pred_object(file_path):
     return new_dict
 
 def get_fft_radnet_gt_object(file_path):
-    test_info = pkl.load(open('/mnt/truenas/scratch/yang.liu3/Python/RadarFormer/PolarFormer/data/radial_kitti_format/radialx_infos_test.pkl',"rb"))
+    test_info = pkl.load(open('/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFusion/data/radial_kitti_format/radialx_infos_test.pkl',"rb"))
     test_ids = []
     for i in range(len(test_info)):
         test_ids.append(test_info[i]['image']['image_idx'])
@@ -76,7 +76,7 @@ def get_fft_radnet_gt_object(file_path):
 def get_radial_pred_object(file_path):
     my_prediction = np.load(file_path, allow_pickle=True)
 
-    test_info = pkl.load(open('/mnt/truenas/scratch/yang.liu3/Python/RadarFormer/PolarFormer/data/radial_kitti_format/radialx_infos_test.pkl',"rb"))
+    test_info = pkl.load(open('/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFusion/data/radial_kitti_format/radialx_infos_test.pkl',"rb"))
     test_ids = []
     for i in range(len(test_info)):
         test_ids.append(test_info[i]['image']['image_idx'])
@@ -104,9 +104,9 @@ def get_radial_pred_object(file_path):
     # print(new_dict[1627])
     return new_dict
 
-def get_radial_gt_object(gt_file='/mnt/truenas/scratch/feng.wang/training/RadarFormer/PolarFormer/data/radial/ready/RADIal/radar_anno.pkl'):
+def get_radial_gt_object(gt_file='/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFusion/data/radial_kitti_format/radar_anno.pkl'):
     gt_info = pkl.load(open(gt_file,"rb"))
-    test_info = pkl.load(open('/mnt/truenas/scratch/yang.liu3/Python/RadarFormer/PolarFormer/data/radial_kitti_format/radialx_infos_test.pkl',"rb"))
+    test_info = pkl.load(open('/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFusion/data/radial_kitti_format/radialx_infos_test.pkl',"rb"))
     test_ids = []
     for i in range(len(test_info)):
         test_ids.append(test_info[i]['image']['image_idx'])

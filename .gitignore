@@ -138,3 +138,4 @@ exps/
 *.png
 *.obj
 *.ply
+od_evaluation/.params.py.swp
