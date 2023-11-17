@@ -104,16 +104,17 @@ def get_radial_pred_object(file_path):
     # print(new_dict[1627])
     return new_dict
 
-def get_radial_gt_object(gt_file='/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFusion/data/radial_kitti_format/radar_anno.pkl'):
-    gt_info = pkl.load(open(gt_file,"rb"))
-    test_info = pkl.load(open('/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFusion/data/radial_kitti_format/radialx_infos_test.pkl',"rb"))
+def get_radial_gt_object(gt_file='/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFusion/data/radial_kitti_format/radialx_infos_test.pkl'):
+    test_info = pkl.load(open(gt_file,"rb"))
     test_ids = []
     for i in range(len(test_info)):
         test_ids.append(test_info[i]['image']['image_idx'])
 
     new_dict = {}
     for idx in range(len(test_ids)):
-        gt_bbox = np.array(gt_info['%06d'%test_ids[idx]])
+        # gt_bbox = np.array(gt_info['%06d'%test_ids[idx]])
+        gt_anno = test_info[idx]['annos']
+        gt_bbox = np.concatenate((gt_anno['location'], gt_anno['dimensions'],  gt_anno['rotation_y'][:, None]), axis=-1)
         if len(gt_bbox) == 0:
             new_dict[test_ids[idx]] = dict(
                 box=np.zeros((0, 7)),
@@ -124,10 +125,8 @@ def get_radial_gt_object(gt_file='/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFu
         else:
             types = np.zeros(len(gt_bbox), dtype='<U32')
             types[:] = 'Vehicle'
-            box = gt_bbox[:,:7].copy()
-            box[:,2] -= box[:,5]/2
             new_dict[test_ids[idx]] = dict(
-                box=box,
+                box=gt_bbox,
                 score=np.ones((len(gt_bbox),)),
                 type=types,
                 timestamp=test_ids[idx],
