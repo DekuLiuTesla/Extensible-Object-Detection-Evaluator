@@ -76,60 +76,50 @@ def get_fft_radnet_gt_object(file_path):
 def get_radial_pred_object(file_path):
     my_prediction = np.load(file_path, allow_pickle=True)
 
-    test_info = pkl.load(open('/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFusion/data/radial_kitti_format/radialx_infos_test.pkl',"rb"))
-    test_ids = []
-    for i in range(len(test_info)):
-        test_ids.append(test_info[i]['image']['image_idx'])
-    my_prediction = my_prediction[np.argsort(test_ids)]
-    # sorted_test_ids = np.sort(test_ids)
     new_dict = {}
     for i in range(len(my_prediction)):
         if len(my_prediction[i]) == 0:
-            new_dict[test_ids[i]] = dict(
+            new_dict[i] = dict(
                 box=np.zeros((0, 7)),
                 score=np.zeros((0,)),
                 type=np.zeros(0, dtype='<U32'),
-                timestamp=test_ids[i],
+                timestamp=i,
             )
         else:
             filter_prediction = my_prediction[i][my_prediction[i][:, 7]>0.01]
             types = np.zeros(len(filter_prediction), dtype='<U32')
             types[:] = 'Vehicle'
-            new_dict[test_ids[i]] = dict(
+            new_dict[i] = dict(
                 box=filter_prediction[:, :7],
                 score=filter_prediction[:, 7],
                 type=types,
-                timestamp=test_ids[i],
+                timestamp=i,
             )
-    # print(new_dict[1627])
+
     return new_dict
 
-def get_radial_gt_object(gt_file='/mnt/weka/scratch/yang.liu3/pyworkspace/EchoFusion/data/radial_kitti_format/radialx_infos_test.pkl'):
+def get_radial_gt_object(gt_file='./data/radial_kitti_format/radialx_infos_test.pkl'):
     test_info = pkl.load(open(gt_file,"rb"))
-    test_ids = []
-    for i in range(len(test_info)):
-        test_ids.append(test_info[i]['image']['image_idx'])
 
     new_dict = {}
-    for idx in range(len(test_ids)):
-        # gt_bbox = np.array(gt_info['%06d'%test_ids[idx]])
+    for idx in range(len(test_info)):
         gt_anno = test_info[idx]['annos']
         gt_bbox = np.concatenate((gt_anno['location'], gt_anno['dimensions'],  gt_anno['rotation_y'][:, None]), axis=-1)
         if len(gt_bbox) == 0:
-            new_dict[test_ids[idx]] = dict(
+            new_dict[idx] = dict(
                 box=np.zeros((0, 7)),
                 score=np.zeros((0,)),
                 type=np.zeros(0, dtype='<U32'),
-                timestamp=test_ids[idx],
+                timestamp=idx,
             )
         else:
             types = np.zeros(len(gt_bbox), dtype='<U32')
             types[:] = 'Vehicle'
-            new_dict[test_ids[idx]] = dict(
+            new_dict[idx] = dict(
                 box=gt_bbox,
                 score=np.ones((len(gt_bbox),)),
                 type=types,
-                timestamp=test_ids[idx],
+                timestamp=idx,
             )
-    # print(new_dict[1627])
+
     return new_dict
